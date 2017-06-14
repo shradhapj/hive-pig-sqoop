@@ -1,0 +1,46 @@
+Hive: San Francisco Salaries (https://www.kaggle.com/kaggle/sf-salaries)
+a) Avg. pay of all the employees over each year
+--
+select year, avg(TotalPay) from salaries group by year;
+But as the data was semi-structured i had to add these details as well:
+select year, avg(TotalPay) from salaries group by year HAVING YEAR = 2011 OR YEAR=2012 OR YEAR=2013 OR YEAR=2014;
+--
+b) Max. salary for each job title
+--
+select JobTitle, max(TotalPay) from salaries group by JobTitle;
+--
+c) Top 20 employees with maximum base pay.
+--
+select employeename, basepay from salaries
+order by basepay desc
+limit 20;
+--
+d) Identify top 10 paid employees over each year.
+---------------
+Partitioned the table over year and run the below query for each year:
+
+select employeename,jobtitle,totalpay from salbyyear 
+where year=2011
+order by totalpay desc limit 10;
+
+select employeename,jobtitle,totalpay from salbyyear 
+where year=2012
+order by totalpay desc limit 10;
+
+select employeename,jobtitle,totalpay from salbyyear 
+where year=2013
+order by totalpay desc limit 10;
+
+select employeename,jobtitle,totalpay from salbyyear 
+where year=2014
+order by totalpay desc limit 10;
+------
+e) Identify top 10 highly paid jobs.
+-----------------------------
+select jobtitle, max(totalpay) as max_sal from salaries
+group by jobtitle
+order by max_sal desc
+limit 10;
+
+-------------------------------------
+

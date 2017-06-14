@@ -1,0 +1,42 @@
+Pig: H1B Petitions (https://www.kaggle.com/nsharan/h-1b-visa)
+
+first load the data::
+hdfs dfs -copyFromLocal lab/data/h1b_kaggle.txt /input/h1b
+h1b = LOAD '/input/h1b' using PigStorage('\t') AS (SRNO:int, case_status:chararray, employer_name:chararray, soc_name:chararray, job_title:chararray, full_time_position:chararray, prevailing_wage:long, year:int, worksite:chararray, lon:chararray, lat:chararray);
+
+a) Avg Salary of H1B visa holders in San Jose
+------------------------
+filtered_h1b = FILTER h1b_data by worksite == 'SAN JOSE, CALIFORNIA';
+h1b_group = group filtered_h1b all;
+avg_salary = foreach h1b_group generate filtered_h1b.worksite, AVG(filtered_h1b.prevailing_wage);
+----------------------------
+b) Find top 50 employers who applied for maximum H1B petitions
+---------
+by_employer = GROUP h1b BY employer_name;
+sum_of_petitions = FOREACH by_employer GENERATE group, COUNT(h1b.SRNO) AS total_petitions;
+order_by_petitions = order sum_of_petitions by total_petitions desc;
+top50employers = limit order_by_petitions 50;
+--------
+c) Calculate how many H1B petitions were applied in each year
+-------------
+by_year = GROUP h1b BY year;
+h1b_each_year = FOREACH by_year GENERATE group, COUNT(h1b.SRNO);
+DUMP h1b_each_year;
+------------
+d) Calculate the amount of full time and part time employment in each year.
+----------------------------
+by_year_fp = GROUP h1b BY(full_time_position,year);
+count_by_year_fp = FOREACH by_year_fp GENERATE group, COUNT(h1b.SRNO);
+DUMP count_by_year_fp;
+--------------------------
+e) Identify top 10 states for which the petitions applied were maximum.
+-------------------------
+by_state = GROUP h1b BY worksite;
+sum_of_petitions = FOREACH by_state GENERATE group, COUNT(h1b.SRNO) AS sum_p;
+order_by_sum_petitions = order sum_of_petitions by sum_p desc;
+top10states = limit order_by_sum_petitions 10;
+-----------------------------
+f) Flush result from result of b) to HDFS
+STORE top50employers into '/output/top10employers';
+
+hdfs dfs -ls /output/top10employers
